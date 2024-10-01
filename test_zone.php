@@ -2,30 +2,62 @@
 include 'config.php';
 include 'templates/header.php';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $zoneName = $_POST['zone_name'];
+if (isset($_POST['test_zone'])) {
+    $testZone = $_POST['test_zone'];
 
-    // Вызов команды pdnsutil для проверки зоны
-    $output = shell_exec("pdnsutil check-zone $zoneName 2>&1");
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, "$apiUrl/" . urlencode($testZone));
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+        'X-API-Key: ' . $apiKey
+    ));
 
-    echo "<pre>$output</pre>";
+    $response = curl_exec($ch);
+    if (curl_errno($ch)) {
+        echo 'Ошибка cURL: ' . curl_error($ch);
+    } else {
+        $zoneInfo = json_decode($response, true);
+
+        if ($zoneInfo) {
+            echo "<h2>Результаты тестирования зоны: " . htmlspecialchars($testZone) . "</h2>";
+            echo "<p>Зона найдена: " . htmlspecialchars($zoneInfo['name']) . "</p>";
+
+            // Проверяем ключевые записи
+            $hasARecord = false;
+            $hasNSRecord = false;
+            $hasSOARecord = false;
+
+            foreach ($zoneInfo['rrsets'] as $record) {
+                if ($record['type'] === 'A') {
+                    $hasARecord = true;
+                }
+                if ($record['type'] === 'NS') {
+                    $hasNSRecord = true;
+                }
+                if ($record['type'] === 'SOA') {
+                    $hasSOARecord = true;
+                }
+            }
+
+            echo "<p>Запись A: " . ($hasARecord ? "найдена" : "не найдена") . "</p>";
+            echo "<p>Запись NS: " . ($hasNSRecord ? "найдена" : "не найдена") . "</p>";
+            echo "<p>Запись SOA: " . ($hasSOARecord ? "найдена" : "не найдена") . "</p>";
+        } else {
+            echo "<p>Зона не найдена.</p>";
+        }
+    }
+    curl_close($ch);
 }
+
 ?>
 
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <title>Тестирование зоны</title>
-</head>
-<body>
-    <h2>Тестировать зону</h2>
-    <form method="post" action="test_zone.php">
-        <label for="zone_name">Имя зоны:</label>
-        <input type="text" id="zone_name" name="zone_name" required><br>
-        <input type="submit" value="Тестировать">
-    </form>
-</body>
-</html>
+<h1>Тестирование зоны</h1>
+<form action="test_zone.php" method="post">
+    <label for="test_zone">Введите зону для тестирования:</label>
+    <input type="text" id="test_zone" name="test_zone" required><br>
+    <input type="submit" value="Тестировать зону">
+</form>
 
-<?php include 'templates/footer.php'; ?>
+<?php
+include 'templates/footer.php';
+?>

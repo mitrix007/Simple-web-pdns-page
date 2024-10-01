@@ -2,26 +2,25 @@
 include 'config.php';
 include 'templates/header.php';
 
-// Получение статистики с сервера PowerDNS
-$ch = curl_init("$apiUrl/statistics");
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_HTTPHEADER, ["X-API-Key: $apiKey"]);
+// Запрос статистики сервера
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, "http://127.0.0.1:8081/api/v1/servers/localhost/statistics");
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+    'X-API-Key: ' . $apiKey
+));
 
 $response = curl_exec($ch);
-$stats = json_decode($response, true);
-
 if (curl_errno($ch)) {
-    echo 'Ошибка CURL: ' . curl_error($ch);
+    echo 'Ошибка cURL: ' . curl_error($ch);
 } else {
-    echo '<h2>Статистика сервера</h2>';
-    echo '<table>';
-    echo '<tr><th>Параметр</th><th>Значение</th></tr>';
-    foreach ($stats as $stat) {
-        echo "<tr><td>{$stat['name']}</td><td>{$stat['value']}</td></tr>";
-    }
-    echo '</table>';
-}
+    $stats = json_decode($response, true);
+    echo "<h2>Статистика сервера</h2>";
 
+    foreach ($stats as $stat) {
+        echo "<p>" . htmlspecialchars($stat['name']) . ": " . htmlspecialchars($stat['value']) . "</p>";
+    }
+}
 curl_close($ch);
 
 include 'templates/footer.php';

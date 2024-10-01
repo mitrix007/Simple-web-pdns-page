@@ -2,58 +2,56 @@
 include 'config.php';
 include 'templates/header.php';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $zoneName = $_POST['zone_name'];
+if (isset($_POST['new_zone'])) {
+    $newZone = $_POST['new_zone'];
     $zoneType = $_POST['zone_type'];
+    $zoneMaster = isset($_POST['zone_master']) ? $_POST['zone_master'] : '';
 
-    $data = [
-        'name' => $zoneName,
-        'kind' => strtoupper($zoneType),
-        'masters' => [],
-        'nameservers' => []
-    ];
+    $zoneData = array(
+        "name" => $newZone,
+        "kind" => $zoneType,
+        "masters" => $zoneType === "slave" ? array($zoneMaster) : array(),
+        "nameservers" => array()
+    );
 
-    $ch = curl_init("$apiUrl/zones");
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        "X-API-Key: $apiKey",
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $apiUrl);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+        'X-API-Key: ' . $apiKey,
         'Content-Type: application/json'
-    ]);
+    ));
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($zoneData));
 
     $response = curl_exec($ch);
     if (curl_errno($ch)) {
-        echo 'Ошибка CURL: ' . curl_error($ch);
+        echo 'Ошибка cURL: ' . curl_error($ch);
     } else {
-        echo '<p>Зона добавлена успешно!</p>';
+        echo "<p>Зона создана: " . htmlspecialchars($newZone) . "</p>";
     }
-
     curl_close($ch);
 }
+
 ?>
 
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <title>Добавить зону</title>
-</head>
-<body>
-    <h2>Добавить новую зону</h2>
-    <form method="post" action="add_zone.php">
-        <label for="zone_name">Имя зоны:</label>
-        <input type="text" id="zone_name" name="zone_name" required><br>
-        
-        <label for="zone_type">Тип зоны:</label>
-        <select id="zone_type" name="zone_type">
-            <option value="master">Мастер</option>
-            <option value="slave">Слейв</option>
-        </select><br>
+<h1>Создание новой зоны</h1>
+<form action="add_zone.php" method="post">
+    <label for="new_zone">Домен (зона):</label>
+    <input type="text" id="new_zone" name="new_zone" required><br>
+    
+    <label for="zone_type">Тип зоны:</label>
+    <select id="zone_type" name="zone_type" required>
+        <option value="master">Master</option>
+        <option value="slave">Slave</option>
+    </select><br>
 
-        <input type="submit" value="Добавить зону">
-    </form>
-</body>
-</html>
+    <label for="zone_master">Мастер сервер (для slave):</label>
+    <input type="text" id="zone_master" name="zone_master"><br>
 
-<?php include 'templates/footer.php'; ?>
+    <input type="submit" value="Создать зону">
+</form>
+
+<?php
+include 'templates/footer.php';
+?>
