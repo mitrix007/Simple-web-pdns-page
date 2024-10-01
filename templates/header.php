@@ -13,7 +13,7 @@
         <ul>
             <li><a href="index.php">Главная</a></li>
             <li><a href="add_zone.php">Добавить зону</a></li>
-			<li><a href="add_zone.php">Добавить запись</a></li>
+			<li><a href="add_record.php">Добавить запись</a></li>
             <li><a href="test_zone.php">Тестировать зону</a></li>
             <li><a href="stats.php">Статистика</a></li>
             <li><a href="logout.php">Выход</a></li>
