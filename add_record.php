@@ -1,8 +1,9 @@
 <?php
+// Подключаем конфигурацию и заголовок
 include 'config.php';
 include 'templates/header.php';
 
-// Получение списка доменов
+// Получение списка зон через API PowerDNS
 $ch = curl_init("$apiUrl/zones");
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_HTTPHEADER, ["X-API-Key: $apiKey"]);
@@ -11,13 +12,16 @@ $response = curl_exec($ch);
 $zones = json_decode($response, true);
 curl_close($ch);
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+// Обработка формы для добавления записи
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_record'])) {
+    // Получаем данные из формы
     $domain = $_POST['domain'];
     $recordType = $_POST['record_type'];
     $recordName = $_POST['record_name'];
     $recordContent = $_POST['record_content'];
     $ttl = $_POST['ttl'];
 
+    // Формируем массив данных для отправки
     $data = [
         'name' => $recordName,
         'type' => strtoupper($recordType),
@@ -25,6 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'ttl' => (int)$ttl
     ];
 
+    // Инициализация cURL для отправки данных в PowerDNS API
     $ch = curl_init("$apiUrl/zones/$domain/records");
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_POST, true);
@@ -34,6 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'Content-Type: application/json'
     ]);
 
+    // Выполнение запроса и обработка возможных ошибок
     $response = curl_exec($ch);
     if (curl_errno($ch)) {
         echo 'Ошибка CURL: ' . curl_error($ch);
@@ -53,6 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
     <h2>Добавить новую запись DNS</h2>
+    <!-- Форма для добавления новой записи в DNS -->
     <form method="post" action="add_record.php">
         <label for="domain">Домен:</label>
         <select id="domain" name="domain" required>
@@ -79,7 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <label for="ttl">TTL:</label>
         <input type="number" id="ttl" name="ttl" value="3600" required><br>
 
-        <input type="submit" value="Добавить запись">
+        <input type="submit" name="add_record" value="Добавить запись">
     </form>
 </body>
 </html>
