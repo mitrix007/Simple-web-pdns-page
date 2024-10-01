@@ -3,42 +3,50 @@ include 'config.php';
 include 'templates/header.php';
 
 // Проверяем, была ли отправлена форма
-if (isset($_POST['new_zone'])) {
-    $newZone = trim($_POST['new_zone']); // Удаляем пробелы по краям
-    $zoneType = $_POST['zone_type'];
-    $zoneMaster = isset($_POST['zone_master']) ? trim($_POST['zone_master']) : '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $domain = $_POST['domain'];
+    $recordType = $_POST['record_type'];
+    $recordName = $_POST['record_name'];
+    $recordContent = $_POST['record_content'];
+    $ttl = $_POST['ttl'];
 
-    // Подготовка данных зоны
-    $zoneData = array(
-        "name" => $newZone,
-        "kind" => $zoneType,
-        "masters" => $zoneType === "slave" ? array($zoneMaster) : array(),
-        "nameservers" => array() // Добавьте необходимые nameservers, если нужно
-    );
+    $data = [
+        'rrsets' => [
+            [
+                'name' => $recordName,
+                'type' => strtoupper($recordType),
+                'ttl' => (int)$ttl,
+                'changetype' => 'REPLACE',
+                'records' => [
+                    [
+                        'content' => $recordContent,
+                        'disabled' => false
+                    ]
+                ]
+            ]
+        ]
+    ];
 
-    // Инициализация cURL
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $apiUrl);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-        'X-API-Key: ' . $apiKey,
+    $ch = curl_init("$apiUrl/zones/$domain");
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PATCH');
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        "X-API-Key: $apiKey",
         'Content-Type: application/json'
-    ));
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($zoneData));
+    ]);
 
-    // Выполнение запроса и обработка ответа
     $response = curl_exec($ch);
     if (curl_errno($ch)) {
-        echo 'Ошибка cURL: ' . curl_error($ch);
+        echo 'Ошибка CURL: ' . curl_error($ch);
     } else {
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        if ($httpCode === 201) {
-            echo "<p>Зона создана: " . htmlspecialchars($newZone) . "</p>";
+        if (strpos($response, 'error') !== false) {
+            echo '<p>Ошибка при добавлении записи: ' . htmlspecialchars($response) . '</p>';
         } else {
-            echo "<p>Ошибка при создании зоны: " . htmlspecialchars($response) . "</p>";
+            echo '<p>Запись добавлена успешно!</p>';
         }
     }
+
     curl_close($ch);
 }
 ?>
