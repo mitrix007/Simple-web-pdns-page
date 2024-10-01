@@ -16,10 +16,25 @@ if (curl_errno($ch)) {
 } else {
     $stats = json_decode($response, true);
     echo "<h2>Статистика сервера</h2>";
-
+ echo '<table>';
+    echo '<tr><th>Параметр</th><th>Значение</th><th>Комментарий</th></tr>';
     foreach ($stats as $stat) {
-        echo "<p>" . htmlspecialchars($stat['name']) . ": " . htmlspecialchars($stat['value']) . "</p>";
+        $comment = ''; // По умолчанию комментарий пуст
+        switch ($stat['name']) {
+            case 'zones':
+                $comment = 'Количество зон, управляемых сервером.';
+                break;
+            case 'records':
+                $comment = 'Общее количество DNS-записей.';
+                break;
+            case 'queries':
+                $comment = 'Количество запросов, обработанных сервером.';
+                break;
+            // Добавьте другие параметры и комментарии при необходимости
+        }
+        echo "<tr><td>{$stat['name']}</td><td>{$stat['value']}</td><td>$comment</td></tr>";
     }
+    echo '</table>';
 }
 curl_close($ch);
 
