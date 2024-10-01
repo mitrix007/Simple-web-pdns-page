@@ -1,3 +1,8 @@
+<?php
+// Подключаем файл конфигурации
+require_once 'config.php';
+?>
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -32,10 +37,6 @@
 </form>
 
 <?php
-// Настройки API PowerDNS
-$apiUrl = "http://127.0.0.1:8081/api/v1/servers/localhost/zones";
-$apiKey = "your_api_key"; // Замените на ваш API-ключ
-
 // cURL запрос для получения всех зон
 $ch = curl_init();
 curl_setopt($ch, CURLOPT_URL, $apiUrl);
