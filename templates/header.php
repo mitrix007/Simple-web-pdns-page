@@ -1,0 +1,29 @@
+<?php
+// Проверка авторизации
+if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
+    header("Location: login.php");
+    exit();
+}
+?>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PowerDNS GUI</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+    <h1>PowerDNS GUI</h1>
+    <nav>
+        <ul>
+            <li><a href="index.php">Главная</a></li>
+            <li><a href="add_zone.php">Добавить зону</a></li>
+            <li><a href="test_zone.php">Тестировать зону</a></li>
+            <li><a href="stats.php">Статистика</a></li>
+            <li><a href="logout.php">Выход</a></li>
+        </ul>
+    </nav>
+</header>
+<main>
