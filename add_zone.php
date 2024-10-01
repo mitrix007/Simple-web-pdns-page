@@ -53,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_zone'])) {
 <body>
     <h2>Создать новую зону</h2>
     <!-- Форма для создания новой зоны DNS -->
-    <form method="post" action="create_zone.php">
+    <form method="post" action="add_zone.php">
         <label for="domain">Домен:</label>
         <input type="text" id="domain" name="domain" required><br>
 
